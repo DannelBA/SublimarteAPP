@@ -1,18 +1,20 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexto/AuthContext'
+import Segmentado from '../componentes/Segmentado'
+
 
 const MAX_MB = 25
 const TIPOS = ['image/png', 'image/jpeg', 'image/webp', 'application/pdf']
+const ETQ_PRIORIDAD = { normal: 'Normal', urgente: 'Urgente' }
 
-const disenoVacio = () => ({
-  tipo_trabajo: 'DTF textil',
+const disenoVacio = (tipoId = '') => ({
+  tipo_trabajo_id: tipoId,
   descripcion: '',
   ancho_cm: '',
   alto_cm: '',
   cantidad: '1',
-  acabado: 'Mate',
   imagenes: [],
 })
 
@@ -30,10 +32,28 @@ export default function NuevoPedido() {
   const [disenos, setDisenos] = useState([disenoVacio()])
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [tipos, setTipos] = useState([])
+
+  useEffect(() => {
+    supabase
+      .from('tipos_trabajo')
+      .select('id, nombre')
+      .eq('activo', true)
+      .order('nombre')
+      .then(({ data }) => {
+        const lista = data || []
+        setTipos(lista)
+        if (lista.length) {
+          setDisenos((ds) => ds.map((d) => (d.tipo_trabajo_id ? d : { ...d, tipo_trabajo_id: String(lista[0].id) })))
+        }
+      })
+  }, [])
 
   const cambiarP = (campo) => (e) => setP({ ...p, [campo]: e.target.value })
   const cambiarDiseno = (i, campo) => (e) =>
     setDisenos(disenos.map((d, j) => (j === i ? { ...d, [campo]: e.target.value } : d)))
+  const fijarDiseno = (i, campo) => (valor) =>
+    setDisenos(disenos.map((d, j) => (j === i ? { ...d, [campo]: valor } : d)))
 
   // Revisa los archivos elegidos y los agrega al diseño i
   function agregarArchivos(i, lista) {
@@ -90,12 +110,11 @@ export default function NuevoPedido() {
       .insert(
         disenos.map((d) => ({
           pedido_numero: pedido.numero,
-          tipo_trabajo: d.tipo_trabajo,
+          tipo_trabajo_id: Number(d.tipo_trabajo_id),
           descripcion: d.descripcion,
           ancho_cm: Number(d.ancho_cm),
           alto_cm: Number(d.alto_cm),
           cantidad: Number(d.cantidad),
-          acabado: d.acabado,
         }))
       )
       .select('id')
@@ -139,109 +158,140 @@ export default function NuevoPedido() {
     navegar(`/pedido/${pedido.numero}`)
   }
 
-  return (
+    return (
     <form onSubmit={guardar}>
       <h1>Nuevo pedido</h1>
+      <p className="mut sub">Completa los datos del cliente y agrega uno o varios diseños.</p>
 
-      <div className="card panel form">
-        <label>Cliente
-          <input value={p.cliente_nombre} onChange={cambiarP('cliente_nombre')} required />
-        </label>
-        <label>Teléfono
-          <input value={p.cliente_telefono} onChange={cambiarP('cliente_telefono')} inputMode="tel" />
-        </label>
-        <label>Fecha límite
-          <input type="date" value={p.fecha_limite} onChange={cambiarP('fecha_limite')} required />
-        </label>
-        <label>Prioridad
-          <select value={p.prioridad} onChange={cambiarP('prioridad')}>
-            <option>normal</option>
-            <option>urgente</option>
-          </select>
-        </label>
-        <label>Precio (COP)
-          <input type="number" min="0" value={p.precio} onChange={cambiarP('precio')} required />
-        </label>
-        <label className="w">Observaciones
-          <textarea value={p.observaciones} onChange={cambiarP('observaciones')} />
-        </label>
-      </div>
+      <section className="seccion">
+        <h2 className="seccion-titulo"><span className="num">1</span>Cliente y entrega</h2>
+        <div className="form">
+          <label>Cliente
+            <input placeholder="Nombre del cliente" value={p.cliente_nombre} onChange={cambiarP('cliente_nombre')} required />
+          </label>
+          <label>Teléfono
+            <input placeholder="300 000 0000" value={p.cliente_telefono} onChange={cambiarP('cliente_telefono')} inputMode="tel" />
+          </label>
+          <label>Fecha límite
+            <input type="date" value={p.fecha_limite} onChange={cambiarP('fecha_limite')} required />
+          </label>
+          <label>Precio
+            <div className="unidad">
+              <span className="pre">$</span>
+              <input type="number" min="0" placeholder="0" value={p.precio} onChange={cambiarP('precio')} required />
+            </div>
+          </label>
+          <div className="w">
+            <span className="etq">Prioridad</span>
+            <Segmentado
+              opciones={['normal', 'urgente']}
+              etiquetas={ETQ_PRIORIDAD}
+              colores={{ urgente: '#d71a6c' }}
+              valor={p.prioridad}
+              onChange={(v) => setP({ ...p, prioridad: v })}
+            />
+          </div>
+          <label className="w">Observaciones
+            <textarea placeholder="Notas para el operario (opcional)" value={p.observaciones} onChange={cambiarP('observaciones')} />
+          </label>
+        </div>
+      </section>
 
       {disenos.map((d, i) => (
-        <div key={i} className="card panel form">
-          <div className="w fila">
-            <h3>Diseño {i + 1}</h3>
+        <section key={i} className="seccion">
+          <div className="seccion-cab">
+            <h2 className="seccion-titulo"><span className="num">{i + 2}</span>Diseño {i + 1}</h2>
             {disenos.length > 1 && (
               <button type="button" className="link" onClick={() => setDisenos(disenos.filter((_, j) => j !== i))}>
-                Quitar
+                Quitar diseño
               </button>
             )}
           </div>
-          <label>Tipo de trabajo
-            <select value={d.tipo_trabajo} onChange={cambiarDiseno(i, 'tipo_trabajo')}>
-              <option>DTF textil</option>
-              <option>UV DTF</option>
-              <option>DTF por metro</option>
-            </select>
-          </label>
-          <label>Acabado
-            <select value={d.acabado} onChange={cambiarDiseno(i, 'acabado')}>
-              <option>Mate</option>
-              <option>Brillante</option>
-            </select>
-          </label>
-          <label className="w">Descripción
-            <textarea value={d.descripcion} onChange={cambiarDiseno(i, 'descripcion')} required />
-          </label>
-          <label>Ancho (cm)
-            <input type="number" min="0" step="0.1" value={d.ancho_cm} onChange={cambiarDiseno(i, 'ancho_cm')} required />
-          </label>
-          <label>Alto (cm)
-            <input type="number" min="0" step="0.1" value={d.alto_cm} onChange={cambiarDiseno(i, 'alto_cm')} required />
-          </label>
-          <label>Cantidad
-            <input type="number" min="1" value={d.cantidad} onChange={cambiarDiseno(i, 'cantidad')} required />
-          </label>
 
-          <div className="w">
-            <label>Imágenes del diseño (PNG, JPG, WEBP o PDF, hasta {MAX_MB} MB cada una)
-              <input
-                type="file"
-                multiple
-                accept={TIPOS.join(',')}
-                onChange={(e) => {
-                  agregarArchivos(i, Array.from(e.target.files))
-                  e.target.value = ''
-                }}
+          <div className="form">
+            <div className="w">
+              <span className="etq">Tipo de trabajo</span>
+              <Segmentado
+                opciones={tipos.map((t) => String(t.id))}
+                etiquetas={Object.fromEntries(tipos.map((t) => [String(t.id), t.nombre]))}
+                valor={d.tipo_trabajo_id}
+                onChange={fijarDiseno(i, 'tipo_trabajo_id')}
+              />
+              {tipos.length === 0 && (
+                <p className="mut">No hay tipos de trabajo activos. Créalos primero en Catálogo.</p>
+              )}
+            </div>
+            <label className="w">Descripción
+              <textarea
+                placeholder="Qué se imprime, colores, posición, acabado y cualquier detalle importante"
+                value={d.descripcion}
+                onChange={cambiarDiseno(i, 'descripcion')}
+                required
               />
             </label>
-            {d.imagenes.map((img, k) => (
-              <div key={k} className="fila" style={{ marginTop: 8, alignItems: 'center' }}>
-                <span className="mut" style={{ flex: '0 0 38%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {img.archivo.name} ({(img.archivo.size / 1048576).toFixed(1)} MB)
-                </span>
+
+            <div className="w form tres">
+              <label>Ancho
+                <div className="unidad cm">
+                  <input type="number" min="0" step="0.1" placeholder="0" value={d.ancho_cm} onChange={cambiarDiseno(i, 'ancho_cm')} required />
+                  <span className="suf">cm</span>
+                </div>
+              </label>
+              <label>Alto
+                <div className="unidad cm">
+                  <input type="number" min="0" step="0.1" placeholder="0" value={d.alto_cm} onChange={cambiarDiseno(i, 'alto_cm')} required />
+                  <span className="suf">cm</span>
+                </div>
+              </label>
+              <label>Cantidad
+                <input type="number" min="1" value={d.cantidad} onChange={cambiarDiseno(i, 'cantidad')} required />
+              </label>
+            </div>
+
+            <div className="w">
+              <span className="etq">Imágenes del diseño</span>
+              <div className="zona-archivos">
                 <input
-                  placeholder="Descripción de esta imagen (opcional)"
-                  value={img.descripcion}
-                  onChange={cambiarDescImagen(i, k)}
+                  type="file"
+                  multiple
+                  accept={TIPOS.join(',')}
+                  onChange={(e) => {
+                    agregarArchivos(i, Array.from(e.target.files))
+                    e.target.value = ''
+                  }}
                 />
-                <button type="button" className="link" onClick={() => quitarImagen(i, k)}>Quitar</button>
+                <strong>Toca para elegir imágenes</strong>
+                <span className="mut">o arrástralas aquí · PNG, JPG, WEBP o PDF · hasta {MAX_MB} MB cada una</span>
               </div>
-            ))}
+              {d.imagenes.map((img, k) => (
+                <div key={k} className="img-fila">
+                  <div className="img-nombre">
+                    <b>{img.archivo.name}</b>
+                    <span className="mut">{(img.archivo.size / 1048576).toFixed(1)} MB</span>
+                  </div>
+                  <input
+                    placeholder="¿Qué muestra esta imagen? (opcional)"
+                    value={img.descripcion}
+                    onChange={cambiarDescImagen(i, k)}
+                  />
+                  <button type="button" className="link" onClick={() => quitarImagen(i, k)}>Quitar</button>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        </section>
       ))}
 
-      <div className="acciones">
-        <button type="button" className="btn" onClick={() => setDisenos([...disenos, disenoVacio()])}>
-          + Agregar otro diseño
+      <button type="button" className="btn-anadir" onClick={() => setDisenos([...disenos, disenoVacio()])}>
+        + Agregar otro diseño
+      </button>
+
+      <div className="barra-guardar">
+        {error && <div className="error">{error}</div>}
+        <button className="btn pri grande" disabled={enviando}>
+          {enviando ? 'Guardando…' : 'Crear pedido'}
         </button>
       </div>
-
-      {error && <div className="error">{error}</div>}
-      <button className="btn pri" disabled={enviando}>
-        {enviando ? 'Guardando…' : 'Crear pedido'}
-      </button>
     </form>
   )
 }

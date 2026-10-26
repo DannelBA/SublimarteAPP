@@ -12,8 +12,10 @@ export default function Layout() {
         <Logo alto={38} />
         <nav>
           {admin && <NavLink to="/pedidos">Pedidos</NavLink>}
+          {admin && <NavLink to="/catalogo">Catálogo</NavLink>}
           <NavLink to="/disponibles">Disponibles</NavLink>
           <NavLink to="/mis-pedidos">Mis pedidos</NavLink>
+          
         </nav>
         <div className="quien">
           {perfil.nombre}
