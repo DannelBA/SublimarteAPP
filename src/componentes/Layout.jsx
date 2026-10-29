@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../contexto/AuthContext'
 import Logo from './Logo'
+import Campana from './Campana'
 
 export default function Layout() {
   const { perfil, salir } = useAuth()
@@ -18,6 +19,7 @@ export default function Layout() {
           
         </nav>
         <div className="quien">
+          <Campana />
           {perfil.nombre}
           <button className="link" onClick={salir}>Salir</button>
         </div>
