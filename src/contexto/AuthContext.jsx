@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { quitarPush } from '../lib/push'
 
 const Ctx = createContext(null)
 export const useAuth = () => useContext(Ctx)
@@ -46,7 +47,10 @@ export function AuthProvider({ children }) {
       })
   }, [user])
 
-  const salir = () => supabase.auth.signOut()
+  const salir = async () => {
+    await quitarPush()
+    await supabase.auth.signOut()
+  }
 
   return (
     <Ctx.Provider value={{ user, perfil, cargando, salir }}>

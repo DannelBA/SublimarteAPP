@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../contexto/AuthContext'
 import Logo from './Logo'
 import Campana from './Campana'
+import BotonPush from './BotonPush'
 
 export default function Layout() {
   const { perfil, salir } = useAuth()
@@ -25,6 +26,7 @@ export default function Layout() {
         </div>
       </header>
       <main className="wrap">
+        <BotonPush />
         <Outlet />
       </main>
     </>

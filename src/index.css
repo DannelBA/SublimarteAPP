@@ -387,3 +387,16 @@ textarea { min-height: 84px; resize: vertical; }
 @media (max-width: 600px) {
   .panel-notif { position: fixed; left: 12px; right: 12px; top: 64px; width: auto; }
 }
+
+.aviso {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--cy);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--cy) 10%, transparent);
+}
