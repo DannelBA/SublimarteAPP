@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexto/AuthContext'
 import Chip from '../componentes/Chip'
+import FormDespacho from '../componentes/FormDespacho'
 import { ACCIONES, ESTADOS, moneda, fechaHora, atrasado } from '../utils'
 
 const TEXTO_ATRAS = {
@@ -19,6 +20,8 @@ export default function DetallePedido() {
 
   const [p, setP] = useState(null)
   const [urls, setUrls] = useState({})
+  const [materiales, setMateriales] = useState([])
+  const [despachando, setDespachando] = useState(false)
   const [error, setError] = useState('')
   const [ocupado, setOcupado] = useState(false)
 
@@ -28,7 +31,8 @@ export default function DetallePedido() {
       .select(`
         *,
         items_pedido(*, tipos_trabajo(nombre), imagenes_item(*)),
-        historial_pedido(*, perfiles(nombre))
+        historial_pedido(*, perfiles(nombre)),
+        reportes_produccion(*, materiales_usados(*, materiales(nombre, unidad)))
       `)
       .eq('numero', numero)
       .maybeSingle()
@@ -38,7 +42,6 @@ export default function DetallePedido() {
     setError('')
     setP(data)
 
-    // Las imágenes son privadas: se piden enlaces temporales (1 hora)
     const rutas = data.items_pedido.flatMap((it) => it.imagenes_item.map((im) => im.archivo))
     if (rutas.length) {
       const { data: firmadas } = await supabase.storage.from('disenos').createSignedUrls(rutas, 3600)
@@ -48,7 +51,11 @@ export default function DetallePedido() {
 
   useEffect(() => { cargar() }, [cargar])
 
-  // Ejecuta una acción, muestra el error si lo hay y vuelve a cargar el pedido
+  useEffect(() => {
+    supabase.from('materiales').select('id, nombre, unidad').eq('activo', true).order('nombre')
+      .then(({ data }) => setMateriales(data || []))
+  }, [])
+
   async function ejecutar(operacion) {
     setError('')
     setOcupado(true)
@@ -56,9 +63,21 @@ export default function DetallePedido() {
     if (error) setError(error.message)
     await cargar()
     setOcupado(false)
+    return !error
   }
 
   const rpc = (nombre) => ejecutar(() => supabase.rpc(nombre, { p_numero: p.numero }))
+
+  async function despachar(inconvenientes, listaMateriales) {
+    const ok = await ejecutar(() =>
+      supabase.rpc('despachar_pedido', {
+        p_numero: p.numero,
+        p_inconvenientes: inconvenientes,
+        p_materiales: listaMateriales,
+      })
+    )
+    if (ok) setDespachando(false)
+  }
 
   function cancelar() {
     if (!confirm('¿Cancelar este pedido?')) return
@@ -69,8 +88,11 @@ export default function DetallePedido() {
 
   const mio = p.tomado_por === user.id
   const puede = admin || mio
+  const puedeDespachar = (p.estado === 'en_produccion' && puede) || (admin && p.estado === 'disponible')
   const items = [...p.items_pedido].sort((a, b) => a.id - b.id)
   const historial = [...p.historial_pedido].sort((a, b) => b.created_at.localeCompare(a.created_at))
+  const reporte = Array.isArray(p.reportes_produccion) ? p.reportes_produccion[0] : p.reportes_produccion
+  const costo = reporte ? reporte.materiales_usados.reduce((s, mu) => s + mu.cantidad * mu.costo_aplicado, 0) : 0
 
   return (
     <>
@@ -103,6 +125,9 @@ export default function DetallePedido() {
         {p.estado === 'disponible' && (
           <button className="btn pri" disabled={ocupado} onClick={() => rpc('tomar_pedido')}>Tomar pedido</button>
         )}
+        {puedeDespachar && !despachando && (
+          <button className="btn pri" disabled={ocupado} onClick={() => setDespachando(true)}>Despachar</button>
+        )}
         {p.estado === 'despachado' && puede && (
           <button className="btn pri" disabled={ocupado} onClick={() => rpc('entregar_pedido')}>Marcar entregado</button>
         )}
@@ -113,6 +138,15 @@ export default function DetallePedido() {
           <button className="btn rojo" disabled={ocupado} onClick={cancelar}>Cancelar pedido</button>
         )}
       </div>
+
+      {despachando && (
+        <FormDespacho
+          materiales={materiales}
+          enviando={ocupado}
+          onEnviar={despachar}
+          onCancelar={() => setDespachando(false)}
+        />
+      )}
 
       <h2>Diseños</h2>
       {items.map((it, i) => (
@@ -136,6 +170,29 @@ export default function DetallePedido() {
           )}
         </section>
       ))}
+
+      {reporte && (
+        <>
+          <h2>Reporte de producción</h2>
+          <section className="seccion">
+            {reporte.materiales_usados.map((mu) => (
+              <div key={mu.id} className="fila" style={{ padding: '8px 0', borderBottom: '1px solid var(--line)' }}>
+                <span>{mu.materiales?.nombre}</span>
+                <span className="mut">
+                  {mu.cantidad} {mu.materiales?.unidad}
+                  {admin && ` · ${moneda(mu.cantidad * mu.costo_aplicado)}`}
+                </span>
+              </div>
+            ))}
+            {reporte.inconvenientes && <p><b>Inconvenientes:</b> {reporte.inconvenientes}</p>}
+            {admin && (
+              <p className="mut" style={{ marginBottom: 0 }}>
+                Costo de materiales: <b>{moneda(costo)}</b> · Ganancia del pedido: <b>{moneda(p.precio - costo)}</b>
+              </p>
+            )}
+          </section>
+        </>
+      )}
 
       <h2>Trazabilidad</h2>
       <ul className="tl">

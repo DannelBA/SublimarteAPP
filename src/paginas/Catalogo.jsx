@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import CatalogoMateriales from '../componentes/CatalogoMateriales'
 
 function FilaTipo({ tipo, onCambiar }) {
   const [nombre, setNombre] = useState(tipo.nombre)
@@ -76,6 +77,7 @@ export default function Catalogo() {
           Los tipos desactivados dejan de aparecer en pedidos nuevos, pero los pedidos anteriores los conservan.
         </p>
       </section>
+            <CatalogoMateriales />
     </>
   )
 }
