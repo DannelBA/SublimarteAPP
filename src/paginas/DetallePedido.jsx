@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexto/AuthContext'
 import Chip from '../componentes/Chip'
 import FormDespacho from '../componentes/FormDespacho'
 import { ACCIONES, ESTADOS, moneda, fechaHora, atrasado } from '../utils'
+import useActualizacionPedidos from '../lib/useActualizacionPedidos'
 
 const TEXTO_ATRAS = {
   en_produccion: 'Devolver al mercadito',
@@ -24,6 +25,7 @@ export default function DetallePedido() {
   const [despachando, setDespachando] = useState(false)
   const [error, setError] = useState('')
   const [ocupado, setOcupado] = useState(false)
+  const urlsRef = useRef({})
 
   const cargar = useCallback(async () => {
     const { data, error } = await supabase
@@ -38,18 +40,24 @@ export default function DetallePedido() {
       .maybeSingle()
 
     if (error) { setError(error.message); return }
-    if (!data) { setError('No se encontró el pedido o no tienes acceso a él'); return }
+        if (!data) { setError('Este pedido ya no está disponible para ti: puede que otra persona lo haya tomado'); return }
     setError('')
     setP(data)
 
-    const rutas = data.items_pedido.flatMap((it) => it.imagenes_item.map((im) => im.archivo))
+        // Solo se piden enlaces para imágenes nuevas, así las que ya se ven no parpadean
+    const rutas = data.items_pedido
+      .flatMap((it) => it.imagenes_item.map((im) => im.archivo))
+      .filter((r) => !urlsRef.current[r])
     if (rutas.length) {
       const { data: firmadas } = await supabase.storage.from('disenos').createSignedUrls(rutas, 3600)
-      setUrls(Object.fromEntries((firmadas || []).filter((f) => f.signedUrl).map((f) => [f.path, f.signedUrl])))
+      const nuevas = Object.fromEntries((firmadas || []).filter((f) => f.signedUrl).map((f) => [f.path, f.signedUrl]))
+      urlsRef.current = { ...urlsRef.current, ...nuevas }
+      setUrls(urlsRef.current)
     }
   }, [numero])
 
   useEffect(() => { cargar() }, [cargar])
+  useActualizacionPedidos(cargar, numero)
 
   useEffect(() => {
     supabase.from('materiales').select('id, nombre, unidad').eq('activo', true).order('nombre')
