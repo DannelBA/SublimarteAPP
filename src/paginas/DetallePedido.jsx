@@ -6,6 +6,7 @@ import Chip from '../componentes/Chip'
 import FormDespacho from '../componentes/FormDespacho'
 import { ACCIONES, ESTADOS, moneda, fechaHora, atrasado } from '../utils'
 import useActualizacionPedidos from '../lib/useActualizacionPedidos'
+import PrecioEditable from '../componentes/PrecioEditable'
 
 
 const TEXTO_ATRAS = {
@@ -97,6 +98,9 @@ export default function DetallePedido() {
 
   const mio = p.tomado_por === user.id
   const puede = admin || mio
+  const puedePrecio = admin || (mio && ['en_produccion', 'despachado'].includes(p.estado))
+  const cambiarPrecio = (valor) =>
+    ejecutar(() => supabase.rpc('cambiar_precio', { p_numero: p.numero, p_precio: valor }))
   const puedeDespachar = (p.estado === 'en_produccion' && puede) || (admin && p.estado === 'disponible')
   const items = [...p.items_pedido].sort((a, b) => a.id - b.id)
   const historial = [...p.historial_pedido].sort((a, b) => b.created_at.localeCompare(a.created_at))
@@ -125,7 +129,10 @@ export default function DetallePedido() {
             <span className="mut">Prioridad</span>
             <b className={p.prioridad === 'urgente' ? 'urg' : ''}>{p.prioridad}</b>
           </div>
-          <div><span className="mut">Precio</span><b>{moneda(p.precio)}</b></div>
+            <div>
+              <span className="mut">Precio</span>
+              <PrecioEditable precio={p.precio} puedeCambiar={puedePrecio} onGuardar={cambiarPrecio} />
+            </div>
         </div>
         {p.observaciones && <p style={{ marginBottom: 0 }}>{p.observaciones}</p>}
       </section>

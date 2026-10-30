@@ -9,6 +9,7 @@ const COLOR_TIPO = {
   cambio_estado: '#fe6c17',
   fecha_proxima: '#fdc405',
   fecha_vencida: '#d71a6c',
+  precio_cambiado: '#fdc405',
 }
 
 export default function Campana() {
