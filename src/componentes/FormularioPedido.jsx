@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import Segmentado from './Segmentado'
+import InputMoneda from './InputMoneda'
 
 const MAX_MB = 25
 const TIPOS_ARCHIVO = ['image/png', 'image/jpeg', 'image/webp', 'application/pdf']
@@ -129,7 +130,7 @@ export default function FormularioPedido({ titulo, subtitulo, textoBoton, inicia
           <label>Precio
             <div className="unidad">
               <span className="pre">$</span>
-              <input type="number" min="0" placeholder="0" value={p.precio} onChange={cambiarP('precio')} required />
+              <InputMoneda placeholder="0" value={p.precio} onChange={(v) => setP({ ...p, precio: v })} required />
             </div>
           </label>
           <div className="w">
