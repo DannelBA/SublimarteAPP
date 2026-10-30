@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexto/AuthContext'
 import Chip from '../componentes/Chip'
 import FormDespacho from '../componentes/FormDespacho'
 import { ACCIONES, ESTADOS, moneda, fechaHora, atrasado } from '../utils'
 import useActualizacionPedidos from '../lib/useActualizacionPedidos'
+
 
 const TEXTO_ATRAS = {
   en_produccion: 'Devolver al mercadito',
@@ -141,6 +142,9 @@ export default function DetallePedido() {
         )}
         {TEXTO_ATRAS[p.estado] && puede && (
           <button className="btn" disabled={ocupado} onClick={() => rpc('retroceder_pedido')}>{TEXTO_ATRAS[p.estado]}</button>
+        )}
+        {admin && p.estado !== 'cancelado' && (
+          <Link to={`/pedido/${p.numero}/editar`} className="btn">Editar pedido</Link>
         )}
         {admin && p.estado !== 'cancelado' && (
           <button className="btn rojo" disabled={ocupado} onClick={cancelar}>Cancelar pedido</button>
