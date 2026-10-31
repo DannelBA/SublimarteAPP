@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import useActualizacionPedidos from '../lib/useActualizacionPedidos'
 import { useAuth } from '../contexto/AuthContext'
 import Chip from '../componentes/Chip'
 import { ESTADOS, moneda, atrasado } from '../utils'
@@ -19,20 +20,19 @@ export default function ListaPedidos({ modo }) {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    let vivo = true
+  const cargar = useCallback(async () => {
     let consulta = supabase.from('pedidos').select('*').order('fecha_limite')
     if (modo === 'disponibles') consulta = consulta.eq('estado', 'disponible')
     if (modo === 'mios') consulta = consulta.eq('tomado_por', user.id)
 
-    consulta.then(({ data, error }) => {
-      if (!vivo) return
-      if (error) setError(error.message)
-      else { setPedidos(data); setError('') }
-      setCargando(false)
-    })
-    return () => { vivo = false }
+    const { data, error } = await consulta
+    if (error) setError(error.message)
+    else { setPedidos(data); setError('') }
+    setCargando(false)
   }, [modo, user.id])
+
+  useEffect(() => { cargar() }, [cargar])
+  useActualizacionPedidos(cargar)
 
   const lista = pedidos.filter(
     (p) =>

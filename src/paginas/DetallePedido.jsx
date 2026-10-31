@@ -1,10 +1,13 @@
-import { useCallback, useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexto/AuthContext'
 import Chip from '../componentes/Chip'
 import FormDespacho from '../componentes/FormDespacho'
 import { ACCIONES, ESTADOS, moneda, fechaHora, atrasado } from '../utils'
+import useActualizacionPedidos from '../lib/useActualizacionPedidos'
+import PrecioEditable from '../componentes/PrecioEditable'
+
 
 const TEXTO_ATRAS = {
   en_produccion: 'Devolver al mercadito',
@@ -24,6 +27,7 @@ export default function DetallePedido() {
   const [despachando, setDespachando] = useState(false)
   const [error, setError] = useState('')
   const [ocupado, setOcupado] = useState(false)
+  const urlsRef = useRef({})
 
   const cargar = useCallback(async () => {
     const { data, error } = await supabase
@@ -38,18 +42,24 @@ export default function DetallePedido() {
       .maybeSingle()
 
     if (error) { setError(error.message); return }
-    if (!data) { setError('No se encontró el pedido o no tienes acceso a él'); return }
+        if (!data) { setError('Este pedido ya no está disponible para ti: puede que otra persona lo haya tomado'); return }
     setError('')
     setP(data)
 
-    const rutas = data.items_pedido.flatMap((it) => it.imagenes_item.map((im) => im.archivo))
+        // Solo se piden enlaces para imágenes nuevas, así las que ya se ven no parpadean
+    const rutas = data.items_pedido
+      .flatMap((it) => it.imagenes_item.map((im) => im.archivo))
+      .filter((r) => !urlsRef.current[r])
     if (rutas.length) {
       const { data: firmadas } = await supabase.storage.from('disenos').createSignedUrls(rutas, 3600)
-      setUrls(Object.fromEntries((firmadas || []).filter((f) => f.signedUrl).map((f) => [f.path, f.signedUrl])))
+      const nuevas = Object.fromEntries((firmadas || []).filter((f) => f.signedUrl).map((f) => [f.path, f.signedUrl]))
+      urlsRef.current = { ...urlsRef.current, ...nuevas }
+      setUrls(urlsRef.current)
     }
   }, [numero])
 
   useEffect(() => { cargar() }, [cargar])
+  useActualizacionPedidos(cargar, numero)
 
   useEffect(() => {
     supabase.from('materiales').select('id, nombre, unidad').eq('activo', true).order('nombre')
@@ -88,6 +98,9 @@ export default function DetallePedido() {
 
   const mio = p.tomado_por === user.id
   const puede = admin || mio
+  const puedePrecio = admin || (mio && ['en_produccion', 'despachado'].includes(p.estado))
+  const cambiarPrecio = (valor) =>
+    ejecutar(() => supabase.rpc('cambiar_precio', { p_numero: p.numero, p_precio: valor }))
   const puedeDespachar = (p.estado === 'en_produccion' && puede) || (admin && p.estado === 'disponible')
   const items = [...p.items_pedido].sort((a, b) => a.id - b.id)
   const historial = [...p.historial_pedido].sort((a, b) => b.created_at.localeCompare(a.created_at))
@@ -116,7 +129,10 @@ export default function DetallePedido() {
             <span className="mut">Prioridad</span>
             <b className={p.prioridad === 'urgente' ? 'urg' : ''}>{p.prioridad}</b>
           </div>
-          <div><span className="mut">Precio</span><b>{moneda(p.precio)}</b></div>
+            <div>
+              <span className="mut">Precio</span>
+              <PrecioEditable precio={p.precio} puedeCambiar={puedePrecio} onGuardar={cambiarPrecio} />
+            </div>
         </div>
         {p.observaciones && <p style={{ marginBottom: 0 }}>{p.observaciones}</p>}
       </section>
@@ -133,6 +149,9 @@ export default function DetallePedido() {
         )}
         {TEXTO_ATRAS[p.estado] && puede && (
           <button className="btn" disabled={ocupado} onClick={() => rpc('retroceder_pedido')}>{TEXTO_ATRAS[p.estado]}</button>
+        )}
+        {admin && p.estado !== 'cancelado' && (
+          <Link to={`/pedido/${p.numero}/editar`} className="btn">Editar pedido</Link>
         )}
         {admin && p.estado !== 'cancelado' && (
           <button className="btn rojo" disabled={ocupado} onClick={cancelar}>Cancelar pedido</button>

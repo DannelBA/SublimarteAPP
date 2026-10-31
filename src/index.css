@@ -400,3 +400,134 @@ textarea { min-height: 84px; resize: vertical; }
   border-radius: 14px;
   background: color-mix(in srgb, var(--cy) 10%, transparent);
 }
+
+/* Ganancias */
+.cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.cifra { background: var(--card); border: 1px solid var(--line); border-top: 3px solid var(--c); border-radius: 16px; padding: 16px; }
+.cifra b { display: block; margin-top: 4px; font: 700 24px Georgia, serif; }
+.barra-fila { display: grid; grid-template-columns: 64px 1fr 120px; gap: 10px; align-items: center; margin: 9px 0; font-size: 13px; }
+.barra { height: 14px; background: var(--bg); border-radius: 99px; overflow: hidden; }
+.barra-ventas { height: 100%; background: color-mix(in srgb, var(--org) 40%, transparent); border-radius: 99px; }
+.barra-neta { height: 100%; background: var(--grad); border-radius: 99px; }
+.leyenda { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: var(--mut); }
+.leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+
+/* Menú con más opciones */
+.top nav { flex-wrap: wrap; }
+.top nav a { white-space: nowrap; }
+
+/* Sugerencias de clientes */
+.sugerencias { position: relative; }
+.sugerencias .etq { margin-bottom: 4px; }
+.lista-sug {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 15;
+  overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+}
+.sug {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--tx);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.sug:last-child { border-bottom: 0; }
+.sug:hover, .sug.activa { background: var(--card2); }
+.sug small { color: var(--mut); }
+
+/* Menú: en el computador se ve arriba, en el celular abajo */
+.top .quien { margin-left: auto; }
+.tabs, .hoja, .fondo-hoja { display: none; }
+
+@media (max-width: 700px) {
+  .menu-pc, .sobre-pc { display: none !important; }
+
+  .tabs {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    background: rgba(7, 7, 5, 0.96);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .tabs a, .tabs button {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 9px 4px 8px;
+    background: none;
+    border: 0;
+    color: var(--mut);
+    font: inherit;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .tabs .active { color: var(--tx); }
+  .tabs .active svg { color: var(--org); }
+
+  .wrap { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+  .barra-guardar { bottom: calc(60px + env(safe-area-inset-bottom, 0px)); padding-bottom: 12px; }
+  .panel-notif { max-height: calc(100vh - 160px); }
+
+  .fondo-hoja { display: block; position: fixed; inset: 0; z-index: 40; background: rgba(0, 0, 0, 0.6); }
+  .hoja {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 41;
+    max-height: 80vh;
+    overflow: auto;
+    padding: 8px 8px calc(16px + env(safe-area-inset-bottom, 0px));
+    background: var(--card);
+    border-top: 1px solid var(--line);
+    border-radius: 20px 20px 0 0;
+  }
+  .hoja-nombre {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 14px 10px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--line);
+  }
+  .hoja-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 14px;
+    background: none;
+    border: 0;
+    border-radius: 12px;
+    color: var(--tx);
+    font: inherit;
+    font-size: 16px;
+    text-align: left;
+    cursor: pointer;
+  }
+  .hoja-item.active, .hoja-item:hover { background: var(--card2); }
+  .hoja-item.rojo { color: var(--pink); }
+}

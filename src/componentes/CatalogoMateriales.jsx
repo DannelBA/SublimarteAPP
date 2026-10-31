@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import InputMoneda from './InputMoneda'
 
 function FilaMaterial({ m, onCambiar }) {
   const [nombre, setNombre] = useState(m.nombre)
@@ -22,8 +23,8 @@ function FilaMaterial({ m, onCambiar }) {
       <input value={nombre} onChange={(e) => setNombre(e.target.value)} onBlur={guardar} aria-label="Nombre" />
       <input value={unidad} onChange={(e) => setUnidad(e.target.value)} onBlur={guardar} aria-label="Unidad" />
       <div className="unidad">
-        <span className="pre">$</span>
-        <input type="number" min="0" step="any" value={costo} onChange={(e) => setCosto(e.target.value)} onBlur={guardar} aria-label="Costo por unidad" />
+        <InputMoneda decimales value={costo} onChange={setCosto} onBlur={guardar} aria-label="Costo por unidad" />
+
       </div>
       <button type="button" className={m.activo ? 'link' : 'btn'} onClick={() => onCambiar(m.id, { activo: !m.activo })}>
         {m.activo ? 'Desactivar' : 'Activar'}
@@ -78,7 +79,7 @@ export default function CatalogoMateriales() {
         <input placeholder="Unidad (ej. metro)" value={nuevo.unidad} onChange={(e) => setNuevo({ ...nuevo, unidad: e.target.value })} required />
         <div className="unidad">
           <span className="pre">$</span>
-          <input type="number" min="0" step="any" placeholder="Costo por unidad" value={nuevo.costo} onChange={(e) => setNuevo({ ...nuevo, costo: e.target.value })} required />
+          <InputMoneda decimales placeholder="Costo por unidad" value={nuevo.costo} onChange={(v) => setNuevo({ ...nuevo, costo: v })} required />
         </div>
         <button className="btn pri">+ Agregar</button>
       </form>
