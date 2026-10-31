@@ -17,6 +17,7 @@ export default function Layout() {
           {admin && <NavLink to="/catalogo">Catálogo</NavLink>}
           {admin && <NavLink to="/usuarios">Usuarios</NavLink>}
           {admin && <NavLink to="/ganancias">Ganancias</NavLink>}
+          {admin && <NavLink to="/clientes">Clientes</NavLink>}
           <NavLink to="/disponibles">Disponibles</NavLink>
           <NavLink to="/mis-pedidos">Mis pedidos</NavLink>
           

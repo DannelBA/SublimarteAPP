@@ -10,6 +10,7 @@ import EditarPedido from './paginas/EditarPedido'
 import Usuarios from './paginas/Usuarios'
 import Cuenta from './paginas/Cuenta'
 import Ganancias from './paginas/Ganancias'
+import Clientes from './paginas/Clientes'
 
 // Deja pasar solo a quien tiene sesión (y, si se indica, el rol correcto)
 function Protegida({ roles, children }) {
@@ -48,6 +49,7 @@ export default function App() {
               <Route path="/usuarios" element={<Protegida roles={['administrador']}><Usuarios /></Protegida>} />
               <Route path="/cuenta" element={<Cuenta />} />
               <Route path="/ganancias" element={<Protegida roles={['administrador']}><Ganancias /></Protegida>} />
+              <Route path="/clientes" element={<Protegida roles={['administrador']}><Clientes /></Protegida>} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
