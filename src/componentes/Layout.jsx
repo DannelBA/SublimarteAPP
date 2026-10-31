@@ -16,13 +16,14 @@ export default function Layout() {
           {admin && <NavLink to="/pedidos">Pedidos</NavLink>}
           {admin && <NavLink to="/catalogo">Catálogo</NavLink>}
           {admin && <NavLink to="/usuarios">Usuarios</NavLink>}
+          {admin && <NavLink to="/ganancias">Ganancias</NavLink>}
           <NavLink to="/disponibles">Disponibles</NavLink>
           <NavLink to="/mis-pedidos">Mis pedidos</NavLink>
           
         </nav>
         <div className="quien">
           <Campana />
-          {perfil.nombre}
+          <NavLink to="/cuenta">{perfil.nombre}</NavLink>
           <button className="link" onClick={salir}>Salir</button>
         </div>
       </header>
