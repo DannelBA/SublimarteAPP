@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import Segmentado from './Segmentado'
 import InputMoneda from './InputMoneda'
+import CampoCliente from './CampoCliente'
 
 const MAX_MB = 25
 const TIPOS_ARCHIVO = ['image/png', 'image/jpeg', 'image/webp', 'application/pdf']
@@ -118,9 +119,12 @@ export default function FormularioPedido({ titulo, subtitulo, textoBoton, inicia
       <section className="seccion">
         <h2 className="seccion-titulo"><span className="num">1</span>Cliente y entrega</h2>
         <div className="form">
-          <label>Cliente
-            <input placeholder="Nombre del cliente" value={p.cliente_nombre} onChange={cambiarP('cliente_nombre')} required />
-          </label>
+          <CampoCliente
+            valor={p.cliente_nombre}
+            onCambiar={(v) => setP((x) => ({ ...x, cliente_nombre: v }))}
+            onElegir={(c) => setP((x) => ({ ...x, cliente_nombre: c.nombre, cliente_telefono: c.telefono || x.cliente_telefono }))}
+            onUnificar={(c) => setP((x) => ({ ...x, cliente_nombre: c.nombre, cliente_telefono: x.cliente_telefono || c.telefono }))}
+          />
           <label>Teléfono
             <input placeholder="300 000 0000" value={p.cliente_telefono} onChange={cambiarP('cliente_telefono')} inputMode="tel" />
           </label>

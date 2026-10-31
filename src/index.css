@@ -415,3 +415,37 @@ textarea { min-height: 84px; resize: vertical; }
 /* Menú con más opciones */
 .top nav { flex-wrap: wrap; }
 .top nav a { white-space: nowrap; }
+
+/* Sugerencias de clientes */
+.sugerencias { position: relative; }
+.sugerencias .etq { margin-bottom: 4px; }
+.lista-sug {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 15;
+  overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+}
+.sug {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--tx);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.sug:last-child { border-bottom: 0; }
+.sug:hover, .sug.activa { background: var(--card2); }
+.sug small { color: var(--mut); }
