@@ -5,6 +5,7 @@ import useActualizacionPedidos from '../lib/useActualizacionPedidos'
 import { useAuth } from '../contexto/AuthContext'
 import Chip from '../componentes/Chip'
 import { ESTADOS, moneda, atrasado } from '../utils'
+import BotonRespaldo from '../componentes/BotonRespaldo'
 
 const TITULOS = {
   todos: 'Todos los pedidos',
@@ -43,6 +44,7 @@ export default function ListaPedidos({ modo }) {
   return (
     <>
       <div className="cab">
+        {modo === 'todos' && <BotonRespaldo />}
         <h1>{TITULOS[modo]}</h1>
         {perfil.rol === 'administrador' && (
           <Link to="/pedidos/nuevo" className="btn pri">+ Nuevo pedido</Link>
