@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { subirImagenes } from '../lib/imagenes'
 import FormularioPedido from '../componentes/FormularioPedido'
+import { borrarArchivos } from '../lib/archivos'
 
 export default function EditarPedido() {
   const { numero } = useParams()
@@ -75,7 +76,7 @@ export default function EditarPedido() {
       const rutas = d.existentes.map((im) => im.archivo)
       const { error } = await supabase.from('items_pedido').delete().eq('id', d.id)
       if (error) { setError(error.message); await cargar(); return }
-      if (rutas.length) await supabase.storage.from('disenos').remove(rutas)
+      if (rutas.length) await borrarArchivos(rutas)
       resumen.eliminados++
     }
 
@@ -115,7 +116,7 @@ export default function EditarPedido() {
       for (const im of d.existentesQuitadas) {
         const { error } = await supabase.from('imagenes_item').delete().eq('id', im.id)
         if (!error) {
-          await supabase.storage.from('disenos').remove([im.archivo])
+          await borrarArchivos([im.archivo])
           resumen.imgQuitadas++
         }
       }
