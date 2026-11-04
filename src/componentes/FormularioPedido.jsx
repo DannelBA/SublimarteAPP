@@ -4,7 +4,7 @@ import Segmentado from './Segmentado'
 import InputMoneda from './InputMoneda'
 import CampoCliente from './CampoCliente'
 
-const MAX_MB = 25
+const MAX_MB = 1000
 const TIPOS_ARCHIVO = ['image/png', 'image/jpeg', 'image/webp', 'application/pdf']
 const ETQ_PRIORIDAD = { normal: 'Normal', urgente: 'Urgente' }
 

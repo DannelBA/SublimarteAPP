@@ -7,6 +7,7 @@ import FormDespacho from '../componentes/FormDespacho'
 import { ACCIONES, ESTADOS, moneda, fechaHora, atrasado } from '../utils'
 import useActualizacionPedidos from '../lib/useActualizacionPedidos'
 import PrecioEditable from '../componentes/PrecioEditable'
+import { urlsParaVer } from '../lib/archivos'
 
 
 const TEXTO_ATRAS = {
@@ -50,9 +51,13 @@ export default function DetallePedido() {
     const rutas = data.items_pedido
       .flatMap((it) => it.imagenes_item.map((im) => im.archivo))
       .filter((r) => !urlsRef.current[r])
-    if (rutas.length) {
-      const { data: firmadas } = await supabase.storage.from('disenos').createSignedUrls(rutas, 3600)
-      const nuevas = Object.fromEntries((firmadas || []).filter((f) => f.signedUrl).map((f) => [f.path, f.signedUrl]))
+      if (rutas.length) {
+        let nuevas = {}
+        try {
+          nuevas = await urlsParaVer(rutas)
+        } catch {
+        // si falla, el pedido se muestra igual, solo sin imágenes
+      }
       urlsRef.current = { ...urlsRef.current, ...nuevas }
       setUrls(urlsRef.current)
     }
